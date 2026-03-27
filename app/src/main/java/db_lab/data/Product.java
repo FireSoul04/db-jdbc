@@ -62,7 +62,22 @@ public final class Product {
     public static final class DAO {
 
         public static Optional<Product> find(Connection connection, int productId) {
-            throw new UnsupportedOperationException("Unimplemented");
+
+            try (
+                var statement = DAOUtils.prepare(connection, Queries.FIND_PRODUCT, productId);
+                var resultSet = statement.executeQuery();
+            ) {
+                if (resultSet.next()) {
+                    var code = resultSet.getInt("code");
+                    var name = resultSet.getString("name");
+                    var description = resultSet.getString("description");
+                    var comp = Material.DAO.forProduct(connection, productId);
+                    return Optional.of(new Product(code, name, description, comp));
+                }
+                return Optional.empty();
+            } catch (Exception e) {
+                throw new DAOException(e);
+            }
         }
     }
 }
